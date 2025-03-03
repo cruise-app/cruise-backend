@@ -1,4 +1,7 @@
 const UserService = require("../services/user_services");
+const redis = require("../util/redis");
+const sendEmail = require("../util/send_email");
+const generateOTP = require("../util/generate_otp");
 
 exports.registerUser = async (req, res, next) => {
   const {
@@ -44,12 +47,35 @@ exports.checkEmail = async (req, res, next) => {
   const { email } = req.body;
 
   try {
-    await UserService.checkEmail(email);
-    res.status(200).json({
-      message: "Email sent successfully",
-    });
+    const existingUser = await UserService.checkUser(email);
+
+    if (existingUser) {
+      console.log("Email exists");
+      res.status(400).json({ error: "Email exists" });
+      return;
+    }
+
+    const otp = generateOTP();
+    await redis.setEx(`otp:${email}`, 300, otp);
+
+    await sendEmail(email, otp, "Email Verification");
   } catch (error) {
-    console.log(error);
     res.status(400).json({ error: error.message });
   }
+};
+
+exports.verifyOTP = async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  const storedOtp = await redis.get(`otp:${email}`);
+
+  if (!storedOtp || storedOtp !== otp) {
+    return res.status(400).json({ message: "Invalid OTP or expired" });
+  }
+
+  await redis.del(`otp:${email}`);
+
+  res.json({
+    message: "OTP verified, proceed with registeration",
+  });
 };
