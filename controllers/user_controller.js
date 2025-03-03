@@ -40,17 +40,16 @@ exports.registerUser = async (req, res, next) => {
   }
 };
 
-
-exports.verifyEmail = async (req, res, next) => {
+exports.checkEmail = async (req, res, next) => {
   const { email } = req.body;
+
   try {
-    const user = await UserService.verifyEmail(email, otp);
-    return res.status(200).json({
-      message: "Email verified successfully",
-      user,
+    await UserService.checkEmail(email);
+    res.status(200).json({
+      message: "Email sent successfully",
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
-}
+};
