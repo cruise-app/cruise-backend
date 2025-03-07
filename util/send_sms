@@ -1,0 +1,21 @@
+const accountSid = "ACed2ce975ceb9ca6bf779506dad414cb4";
+const authToken = "24a82adef218cac36df22493884edd7c";
+const client = require("twilio")(accountSid, authToken);
+
+async function sendSMS(phoneNumber, otp, subject) {
+  try {
+    await client.messages.create({
+      from: "+19897877629",
+      to: phoneNumber,
+      subject: subject,
+      body: `Your OTP is ${otp}`,
+    });
+    console.log("OTP sent successfully");
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+}
+
+module.exports = sendSMS;

@@ -1,12 +1,15 @@
 const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
+// const sgMail = require("@sendgrid/mail");
+const { text } = require("body-parser");
+// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 require("dotenv").config(); // Load environment variables
 
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
       api_key:
-        "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",
+        "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",
     },
   })
 );

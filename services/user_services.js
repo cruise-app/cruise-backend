@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const UserModel = require("../models/user_model");
 
 class UserService {
@@ -25,8 +26,16 @@ class UserService {
       throw error;
     }
   }
-  static async checkUser(email) {
-    return await UserModel.findOne({ where: { email } });
+  static async checkEmail(email) {
+    return await UserModel.findOne({
+      where: { email },
+    });
+  }
+
+  static async checkPhoneNumber(phoneNumber) {
+    return await UserModel.findOne({
+      where: { phoneNumber },
+    });
   }
 }
 
