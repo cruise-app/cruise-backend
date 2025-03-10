@@ -38,12 +38,16 @@ exports.registerUser = async (req, res, next) => {
     );
 
     return res.status(201).json({
-      message: "User created successfully",
+      status: "success",
+      message: "User registered successfully",
       userId: user.id,
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
   }
 };
 
@@ -58,9 +62,19 @@ exports.checkEmail = async (req, res, next) => {
 
     if (existingUser) {
       console.log("Email exists");
-      return res.status(400).json({ error: "Email exists" });
+      return res.status(409).json({ error: "Email exists" });
     }
 
+    return res.status(200).json({ message: "Email is available" });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+exports.sendEmailOTP = async (req, res, next) => {
+  const { email } = req.body;
+  try {
     const otp = generateOTP();
 
     // Set timeout to avoid infinite load in case Redis hangs
@@ -78,9 +92,9 @@ exports.checkEmail = async (req, res, next) => {
     ]);
 
     return res.status(200).json({ message: "OTP sent to email" });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({ error: error.message });
+  } catch (e) {
+    console.log(e);
+    return res.status(400).json({ error: e.message });
   }
 };
 
@@ -95,6 +109,16 @@ exports.checkPhoneNumber = async (req, res, next) => {
       return res.status(400).json({ error: "Phone number exists" });
     }
 
+    return res.status(200).json({ message: "Phone number is available" });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+exports.sendSMSOTP = async (req, res, next) => {
+  const { phoneNumber } = req.body;
+  try {
     const otp = generateOTP();
 
     // Set timeout to avoid infinite load
@@ -115,21 +139,21 @@ exports.checkPhoneNumber = async (req, res, next) => {
     return res.status(200).json({ message: "OTP sent to phone number" });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 };
 
 exports.verifyOTP = async (req, res, next) => {
-  const { email, phoneNumber, otp } = req.body;
+  const { toVerify, otp } = req.body;
 
   try {
-    if (!email && !phoneNumber) {
+    if (!toVerify) {
       return res
         .status(400)
         .json({ message: "Email or phone number is required" });
     }
-
-    const key = email ? `otp:${email}` : `otp:${phoneNumber}`;
+    console.log("Verifying");
+    const key = `otp:${toVerify}`;
 
     // Set timeout in case Redis takes too long
     const storedOtp = await Promise.race([
@@ -147,7 +171,7 @@ exports.verifyOTP = async (req, res, next) => {
     }
 
     await redis.del(key);
-
+    console.log("Verifiedddd");
     return res.json({
       message: "OTP verified, proceed with registration",
     });
