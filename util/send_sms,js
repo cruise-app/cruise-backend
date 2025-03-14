@@ -1,20 +1,20 @@
-const accountSid = "ACed2ce975ceb9ca6bf779506dad414cb4";
-const authToken = "24a82adef218cac36df22493884edd7c";
+const accountSid = "ACe844238cbc41ac543ece643d7fd7b996";
+const authToken = "d0dc2c4d614f745f3e245ca0b604f8d3";
 const client = require("twilio")(accountSid, authToken);
 
 async function sendSMS(phoneNumber, otp, subject) {
   try {
     await client.messages.create({
-      from: "+19897877629",
+      from: "+12629882324",
       to: phoneNumber,
       subject: subject,
       body: `Your OTP is ${otp}`,
     });
-    console.log("OTP sent successfully");
+    console.log("Inner log: OTP sent successfully");
     return true;
   } catch (error) {
-    console.log(error);
-    return false;
+    console.log("Inner log: Error Sending SMS: ", error);
+    throw new Error("Failed to send OTP via SMS");
   }
 }
 

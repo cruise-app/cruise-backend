@@ -1,23 +1,18 @@
 const nodemailer = require("nodemailer");
-const sendgridTransport = require("nodemailer-sendgrid-transport");
-// const sgMail = require("@sendgrid/mail");
-const { text } = require("body-parser");
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 require("dotenv").config(); // Load environment variables
 
-const transporter = nodemailer.createTransport(
-  sendgridTransport({
-    auth: {
-      api_key:
-        "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",
-    },
-  })
-);
+const mailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "c01015118963@gmail.com",
+    pass: "btbjdlserqbzhelb",
+  },
+});
 
 async function sendEmail(email, otp, subject) {
   try {
-    const info = await transporter.sendMail({
-      from: "mohamedkilany070@gmail.com",
+    const info = await mailTransporter.sendMail({
+      from: "c01015118963@gmail.com",
       to: email,
       subject: subject,
       text: `Your OTP is ${otp}`,
@@ -25,9 +20,9 @@ async function sendEmail(email, otp, subject) {
     });
 
     console.log(`Message sent`);
-    return;
+    return info;
   } catch (error) {
-    console.error("Error sending email:", error);
+    throw new Error("Failed to send OTP email");
   }
 }
 

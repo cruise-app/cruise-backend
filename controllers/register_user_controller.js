@@ -1,7 +1,7 @@
 const UserService = require("../services/user_services");
 const redis = require("../util/redis");
 const sendEmail = require("../util/send_email");
-const sendSMS = require("../util/send_sms");
+const sendSMS = require("../util/send_sms,js");
 const generateOTP = require("../util/generate_otp");
 
 exports.registerUser = async (req, res, next) => {
@@ -120,7 +120,7 @@ exports.sendSMSOTP = async (req, res, next) => {
   const { phoneNumber } = req.body;
   try {
     const otp = generateOTP();
-
+    console.log("Inner log: Sending right now to phone");
     // Set timeout to avoid infinite load
     const redisPromise = redis.setEx(`otp:${phoneNumber}`, 300, otp);
     const smsPromise = sendSMS(phoneNumber, otp, "Phone Number Verification");
@@ -135,7 +135,7 @@ exports.sendSMSOTP = async (req, res, next) => {
       ),
     ]);
 
-    console.log("OTP sent to phone number");
+    console.log("Inner log: OTP sent to phone number");
     return res.status(200).json({ message: "OTP sent to phone number" });
   } catch (error) {
     console.log(error);
@@ -171,7 +171,6 @@ exports.verifyOTP = async (req, res, next) => {
     }
 
     await redis.del(key);
-    console.log("Verifiedddd");
     return res.json({
       message: "OTP verified, proceed with registration",
     });
