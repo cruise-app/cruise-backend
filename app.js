@@ -1,7 +1,8 @@
 const express = require("express");
 const sequelize = require("./util/database");
 const bodyParser = require("body-parser");
-const userRouter = require("./routers/user_router");
+const RegisterUserRouter = require("./routers/register_user_router");
+const LoginUserRouter = require("./routers/login_user_router");
 const port = 3000;
 // const path = require('path');
 // const bodyParser = require('body-parser');
@@ -10,12 +11,13 @@ const port = 3000;
 const app = express();
 
 app.use(bodyParser.json());
-app.use("/", userRouter);
+app.use("/register", RegisterUserRouter);
+app.use("/login", LoginUserRouter);
 // app.use(express.static(path.join(rootDir, 'public')));
 const User = require("./models/user_model");
 
 sequelize
-  .sync()
+  .sync({ force: false })
   .then((result) => {
     console.log(result);
   })

@@ -1,7 +1,7 @@
 const UserService = require("../services/user_services");
 const redis = require("../util/redis");
 const sendEmail = require("../util/send_email");
-const sendSMS = require("../util/send_sms,js");
+const sendSMS = require("../util/send_sms.js");
 const generateOTP = require("../util/generate_otp");
 
 exports.registerUser = async (req, res, next) => {
@@ -10,6 +10,7 @@ exports.registerUser = async (req, res, next) => {
     lastName,
     password,
     confirmPassword,
+    userName,
     email,
     phoneNumber,
     gender,
@@ -26,10 +27,11 @@ exports.registerUser = async (req, res, next) => {
 
     console.log(dateOfBirth);
     console.log(typeof dateOfBirth);
-
+    console.log(userName);
     const user = await UserService.registerUser(
       firstName,
       lastName,
+      userName,
       password,
       email,
       phoneNumber,
@@ -48,6 +50,29 @@ exports.registerUser = async (req, res, next) => {
       status: "fail",
       message: error.message,
     });
+  }
+};
+
+exports.checkUsername = async (req, res, next) => {
+  const { userName } = req.body;
+  console.log(userName);
+
+  try {
+    const existingUser = await UserService.checkUsername(userName);
+
+    if (existingUser) {
+      console.log("Username exists");
+      return res
+        .status(200)
+        .json({ message: "Username exists", success: false });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Username is available", success: true });
+  } catch (error) {
+    console.log(error);
+    return res.status(200).json({ error: error.message, success: false });
   }
 };
 

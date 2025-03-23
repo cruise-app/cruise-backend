@@ -5,6 +5,7 @@ class UserService {
   static async registerUser(
     firstName,
     lastName,
+    userName,
     password,
     email,
     phoneNumber,
@@ -15,6 +16,7 @@ class UserService {
       return await UserModel.create({
         firstName,
         lastName,
+        userName,
         password,
         email,
         phoneNumber,
@@ -35,6 +37,12 @@ class UserService {
   static async checkPhoneNumber(phoneNumber) {
     return await UserModel.findOne({
       where: { phoneNumber },
+    });
+  }
+
+  static async checkUsername(userName) {
+    return await UserModel.findOne({
+      where: { userName },
     });
   }
 }
