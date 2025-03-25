@@ -1,8 +1,8 @@
-const UserService = require("../services/user_services");
-const redis = require("../util/redis");
-const sendEmail = require("../util/send_email");
-const sendSMS = require("../util/send_sms.js");
-const generateOTP = require("../util/generate_otp");
+const UserService = require("../../services/user_services.js");
+const redis = require("../../util/redis.js");
+const sendEmail = require("../../util/send_email.js");
+const sendSMS = require("../../util/send_sms.js");
+const generateOTP = require("../../util/generate_otp.js");
 
 exports.registerUser = async (req, res, next) => {
   const {

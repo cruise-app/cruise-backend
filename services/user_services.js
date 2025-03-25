@@ -1,5 +1,6 @@
 const { where } = require("sequelize");
 const UserModel = require("../models/user_model");
+const bcrypt = require("bcrypt");
 
 class UserService {
   static async registerUser(
@@ -44,6 +45,26 @@ class UserService {
     return await UserModel.findOne({
       where: { userName },
     });
+  }
+
+  static async updatePassword(email, password) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const [updated] = await UserModel.update(
+        { password: hashedPassword },
+        { where: { email } }
+      );
+
+      if (updated === 0) {
+        throw new Error("Password update failed (email not found)");
+      }
+
+      return true;
+    } catch (error) {
+      throw new Error(error.message || "Error updating password");
+    }
   }
 }
 
