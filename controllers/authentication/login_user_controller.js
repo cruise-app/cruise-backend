@@ -9,11 +9,20 @@ exports.login = async (req, res) => {
     console.log("Login Attempt:", email);
 
     const user = await UserModel.findOne({ where: { email } });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) {
+      console.log("User not found");
+      return res
+        .status(200)
+        .json({ message: "Invalid Credentials", success: false });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.log("password not matching");
+      return res
+        .status(401)
+        .json({ message: "Invalid Credentials", success: false });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -26,6 +35,7 @@ exports.login = async (req, res) => {
       message: "Login successful",
       token: token,
       user: { id: user.id, userName: user.userName, email: user.email },
+      success: true,
     });
   } catch (error) {
     console.error("Login error:", error);
