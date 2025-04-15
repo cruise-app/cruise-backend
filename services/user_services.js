@@ -1,4 +1,3 @@
-const { where } = require("sequelize");
 const UserModel = require("../models/user_model");
 const bcrypt = require("bcrypt");
 
@@ -14,50 +13,45 @@ class UserService {
     dateOfBirth
   ) {
     try {
-      return await UserModel.create({
+      const user = new UserModel({
         firstName,
         lastName,
         userName,
-        password,
+        password, // Password will be hashed via pre-save hook in the model
         email,
         phoneNumber,
         gender,
         dateOfBirth,
       });
+
+      return await user.save();
     } catch (error) {
-      console.log(error);
+      console.error("Error registering user:", error);
       throw error;
     }
   }
+
   static async checkEmail(email) {
-    return await UserModel.findOne({
-      where: { email },
-    });
+    return await UserModel.findOne({ email });
   }
 
   static async checkPhoneNumber(phoneNumber) {
-    return await UserModel.findOne({
-      where: { phoneNumber },
-    });
+    return await UserModel.findOne({ phoneNumber });
   }
 
   static async checkUsername(userName) {
-    return await UserModel.findOne({
-      where: { userName },
-    });
+    return await UserModel.findOne({ userName });
   }
 
   static async updatePassword(email, password) {
     try {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      const [updated] = await UserModel.update(
-        { password: hashedPassword },
-        { where: { email } }
+      const updatedUser = await UserModel.findOneAndUpdate(
+        { email },
+        { password },
+        { new: true } // return the updated document
       );
 
-      if (updated === 0) {
+      if (!updatedUser) {
         throw new Error("Password update failed (email not found)");
       }
 

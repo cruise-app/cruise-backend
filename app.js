@@ -1,5 +1,6 @@
 const express = require("express");
-const sequelize = require("./util/database");
+const connectDB = require("./util/mongoDB");
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const RegisterUserRouter = require("./routers/register_user_router");
 const LoginUserRouter = require("./routers/login_user_router");
@@ -16,17 +17,14 @@ app.use("/register", RegisterUserRouter);
 app.use("/login", LoginUserRouter);
 app.use("/forget-password", ForgetPasswordRouter);
 // app.use(express.static(path.join(rootDir, 'public')));
-const User = require("./models/user_model");
 
-sequelize
-  .sync({ force: false })
-  .then((result) => {
-    console.log(result);
+connectDB()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
   })
   .catch((err) => {
-    console.log(err);
+    console.error("Error connecting to the database:", err);
+    process.exit(1);
   });
-
-app.listen(port, () => {
-  console.log("Server is running on port " + port);
-});

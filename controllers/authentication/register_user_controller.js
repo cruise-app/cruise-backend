@@ -1,8 +1,8 @@
 const UserService = require("../../services/user_services.js");
-const redis = require("../../util/redis.js");
 const sendEmail = require("../../util/send_email.js");
 const sendSMS = require("../../util/send_sms.js");
 const generateOTP = require("../../util/generate_otp.js");
+const OTPModel = require("../../models/otp_model.js");
 
 exports.registerUser = async (req, res) => {
   const {
@@ -45,7 +45,7 @@ exports.registerUser = async (req, res) => {
     console.error(error);
     return res.status(400).json({
       status: "fail",
-      message: error.message,
+      message: "User registration failed",
     });
   }
 };
@@ -94,12 +94,14 @@ exports.sendEmailOTP = async (req, res) => {
   const { email } = req.body;
   try {
     const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     await Promise.race([
-      Promise.all([
-        redis.setEx(`otp:${email}`, 300, otp),
-        sendEmail(email, otp, "Email Verification"),
-      ]),
+      OTPModel.findOneAndUpdate(
+        { identifier: email },
+        { otp, expiresAt },
+        { upsert: true, new: true }
+      ).then(() => sendEmail(email, otp, "Email Verification")),
       new Promise((_, reject) =>
         setTimeout(
           () => reject(new Error("Timeout: Email verification failed")),
@@ -138,15 +140,17 @@ exports.sendSMSOTP = async (req, res) => {
   const { phoneNumber } = req.body;
   try {
     const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     await Promise.race([
-      Promise.all([
-        redis.setEx(`otp:${phoneNumber}`, 300, otp),
-        sendSMS(phoneNumber, otp, "Phone Number Verification"),
-      ]),
+      OTPModel.findOneAndUpdate(
+        { identifier: phoneNumber },
+        { otp, expiresAt },
+        { upsert: true, new: true }
+      ).then(() => sendSMS(phoneNumber, otp, "Phone Number Verification")),
       new Promise((_, reject) =>
         setTimeout(
-          () => reject(new Error("Timeout: Phone verification failed")),
+          () => reject(new Error("Timeout: SMS verification failed")),
           10000
         )
       ),
@@ -171,23 +175,19 @@ exports.verifyOTP = async (req, res) => {
         .json({ message: "Email or phone number is required" });
     }
 
-    const key = `otp:${toVerify}`;
-
-    const storedOtp = await Promise.race([
-      redis.get(key),
+    const otpDoc = await Promise.race([
+      OTPModel.findOne({ identifier: toVerify }),
       new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Timeout: Redis failed to respond")),
-          5000
-        )
+        setTimeout(() => reject(new Error("Timeout: DB query failed")), 5000)
       ),
     ]);
 
-    if (!storedOtp || storedOtp !== otp) {
+    if (!otpDoc || otpDoc.otp !== otp || new Date() > otpDoc.expiresAt) {
       return res.status(401).json({ message: "Invalid OTP or expired" });
     }
 
-    await redis.del(key);
+    await OTPModel.deleteOne({ identifier: toVerify });
+
     return res
       .status(200)
       .json({ message: "OTP verified, proceed with registration" });
