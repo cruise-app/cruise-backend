@@ -56,14 +56,14 @@ const tripSchema = new mongoose.Schema({
     },
   ],
 
-  startLocation: {
+  startLocationPoint: {
     type: {
       type: String,
       enum: ["Point"],
       default: "Point",
     },
     coordinates: {
-      type: [Number],
+      type: [Number], // e.g., [longitude, latitude] [0,1]
       required: true,
     },
   },
@@ -76,7 +76,7 @@ const tripSchema = new mongoose.Schema({
     required: true,
   },
 
-  endLocation: {
+  endLocationPoint: {
     type: {
       type: String,
       enum: ["Point"],
@@ -98,12 +98,12 @@ const tripSchema = new mongoose.Schema({
   },
 
   estimatedTripTime: {
-    type: Number,
+    type: String,
     required: true,
   },
 
   estimatedTripDistance: {
-    type: Number,
+    type: String,
     required: true,
   },
 });
