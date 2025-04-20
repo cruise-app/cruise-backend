@@ -11,7 +11,7 @@ const connectDB = async () => {
     // Load models
     require("../models/user_model");
     require("../models/otp_model");
-    require("../models/trip_schema");
+    require("../models/trip_model");
 
     const User = mongoose.model("User");
     const Otp = mongoose.model("OTP");

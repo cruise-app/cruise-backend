@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Trip = require("../models/trip_schema");
+const Trip = require("../models/trip_model");
 const polyline = require("@googlemaps/polyline-codec");
 const geolib = require("geolib");
 

@@ -7,6 +7,24 @@ const tripSchema = new mongoose.Schema({
     required: true,
   },
 
+  vehicleType: {
+    type: String,
+    enum: ["Car", "Minibus", "SUV"],
+    required: true,
+  },
+
+  seatsAvailable: {
+    type: Number,
+    default: function () {
+      const defaultSeatMap = {
+        Car: 3,
+        SUV: 5,
+        Minibus: 13,
+      };
+      return defaultSeatMap[this.vehicleType] || 4;
+    },
+  },
+
   listOfPassengers: [
     {
       passengerId: {
@@ -24,7 +42,7 @@ const tripSchema = new mongoose.Schema({
         default: "Pending",
       },
       pickupLocationName: {
-        type: String, // e.g., "123 Main Street"
+        type: String,
         required: true,
       },
       pickupPoint: {
@@ -34,7 +52,7 @@ const tripSchema = new mongoose.Schema({
           default: "Point",
         },
         coordinates: {
-          type: [Number], // [longitude, latitude]
+          type: [Number],
           required: true,
         },
       },
@@ -63,7 +81,7 @@ const tripSchema = new mongoose.Schema({
       default: "Point",
     },
     coordinates: {
-      type: [Number], // e.g., [longitude, latitude] [0,1]
+      type: [Number],
       required: true,
     },
   },
@@ -108,9 +126,10 @@ const tripSchema = new mongoose.Schema({
   },
 });
 
+// Geo indexes
 tripSchema.index({ "listOfPassengers.pickupPoint": "2dsphere" });
 tripSchema.index({ "listOfPassengers.dropoffPoint": "2dsphere" });
-tripSchema.index({ startLocation: "2dsphere" });
-tripSchema.index({ endLocation: "2dsphere" });
+tripSchema.index({ startLocationPoint: "2dsphere" });
+tripSchema.index({ endLocationPoint: "2dsphere" });
 
 module.exports = mongoose.model("Trip", tripSchema);

@@ -1,5 +1,5 @@
-const TripModel = require("../../models/trip_schema");
-const findSuitableTrips = require("../../util/match_trips");
+const TripModel = require("../../models/trip_model");
+
 const GeocodingService = require("../../services/google_maps_services/geocoding_service");
 const DistanceMatrixService = require("../../services/google_maps_services/distance_matrix_service");
 const DirectionsService = require("../../services/google_maps_services/directions_service");
@@ -11,12 +11,9 @@ exports.createTrip = async (req, res) => {
       startLocationName,
       endLocationName,
       departureTime,
-      //estimatedTripTime,
-      //estimatedTripDistance,
-      //polyline,
-      //listOfPassengers,
+      vehicleType,
     } = req.body;
-    console.log(startLocationName, endLocationName, departureTime);
+    console.log(startLocationName, endLocationName, departureTime, vehicleType);
     if (!startLocationName || !endLocationName) {
       return res.status(400).json({
         message: "Start and end locations are required",
@@ -62,6 +59,7 @@ exports.createTrip = async (req, res) => {
       estimatedTripDistance: estimatedTripDistanceAndTime.distance,
       polyline,
       listOfPassengers: [],
+      vehicleType,
     });
 
     await newTrip.save();
@@ -73,54 +71,6 @@ exports.createTrip = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating trip:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-exports.matchSuitableTrips = async (req, res) => {
-  try {
-    const {
-      passengerPickup,
-      passengerDropoff,
-      maxPickupDistance,
-      maxDropoffDistance,
-    } = req.body;
-
-    if (!passengerPickup || !passengerDropoff) {
-      return res.status(400).json({
-        message: "Passenger pickup and dropoff locations are required",
-        success: false,
-      });
-    }
-    const passengerPickupCoordinates = {
-      latitude: passengerPickup[0],
-      longitude: passengerPickup[1],
-    };
-    const passengerDropoffCoordinates = {
-      latitude: passengerDropoff[0],
-      longitude: passengerDropoff[1],
-    };
-    const suitableTrips = await findSuitableTrips(
-      passengerPickupCoordinates,
-      passengerDropoffCoordinates,
-      maxPickupDistance,
-      maxDropoffDistance
-    );
-
-    if (suitableTrips.length === 0) {
-      return res.status(404).json({
-        message: "No suitable trips found",
-        success: false,
-      });
-    }
-
-    return res.status(200).json({
-      message: "Suitable trips found",
-      success: true,
-      data: suitableTrips,
-    });
-  } catch (error) {
-    console.error("Error matching trips:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
