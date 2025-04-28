@@ -3,7 +3,7 @@ const Trip = require("../models/trip_model");
 const polyline = require("@googlemaps/polyline-codec");
 const geolib = require("geolib");
 
-const MAX_DISTANCE = 1000; // meters
+const MAX_DISTANCE = 10000; // meters
 // const passengerPickup = {latitude: 30.05, longitude: 31.23};
 // const passengerDropoff = {latitude: 30.07, longitude: 31.25};
 
@@ -26,6 +26,9 @@ async function findSuitableTrips(
     console.log("Trips found:", trips.length);
     console.log("Passenger pickup:", passengerPickUp);
     console.log("Passenger dropoff:", passengerDropOff);
+    console.log("Max pickup distance:", maxPickupDistance);
+    console.log("Max dropoff distance:", maxDropoffDistance);
+    console.log(typeof passengerPickUp, typeof passengerDropOff);
     const suitableTrips = [];
 
     for (const trip of trips) {
@@ -46,9 +49,10 @@ async function findSuitableTrips(
         passengerDropOff,
         maxDropoffDistance
       );
-
+      console.log("Pickup suitable:", isPickupSuitable);
+      console.log("Dropoff suitable:", isDropoffSuitable);
       if (isPickupSuitable.isClose && isDropoffSuitable.isClose) {
-        suitableTrips.push({ trip, pickUpDistance, dropoffDistance });
+        suitableTrips.push({ trip });
       }
     }
 
