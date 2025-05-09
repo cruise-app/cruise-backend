@@ -3,7 +3,7 @@ const placesService = require("../../services/google_maps_services/places_servic
 exports.getSuggestedLocations = async (req, res) => {
   try {
     const { input } = req.body; // Extract the input from the request body
-    console.log("Input for place suggestions:", input); // Log the input for debugging
+
     if (!input) {
       return res.status(400).json({
         message: "Input is required",

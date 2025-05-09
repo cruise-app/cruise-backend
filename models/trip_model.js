@@ -9,7 +9,7 @@ const tripSchema = new mongoose.Schema({
 
   vehicleType: {
     type: String,
-    enum: ["Car", "Minibus", "SUV"],
+    enum: ["Sedan", "SUV", "Minibus", "Motorcycle"],
     required: true,
   },
 
@@ -17,9 +17,10 @@ const tripSchema = new mongoose.Schema({
     type: Number,
     default: function () {
       const defaultSeatMap = {
-        Car: 3,
+        Sedan: 3,
         SUV: 5,
         Minibus: 13,
+        Motorcycle: 1,
       };
       return defaultSeatMap[this.vehicleType] || 4;
     },

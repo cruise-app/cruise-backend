@@ -16,6 +16,7 @@
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.1",
     "@googlemaps/polyline-codec": "^1.0.28",
+    "@mapbox/polyline": "^1.2.1",
     "@sendgrid/mail": "^8.1.4",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
