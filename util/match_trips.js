@@ -3,64 +3,74 @@ const Trip = require("../models/trip_model");
 const polyline = require("@googlemaps/polyline-codec");
 const geolib = require("geolib");
 
-const MAX_DISTANCE = 10000; // meters
-// const passengerPickup = {latitude: 30.05, longitude: 31.23};
-// const passengerDropoff = {latitude: 30.07, longitude: 31.25};
+const MAX_DISTANCE = 100; // meters
 
-function isCloseToRoute(routePoints, passengerPoint) {
+function isCloseToRoute(routePoints, passengerPoint, maxDistance) {
   return routePoints.some((routePoint) => {
-    const distance = geolib.getDistance(routePoint, passengerPoint); // in meters
-    console.log(distance);
-    return distance <= MAX_DISTANCE;
+    const distance = geolib.getDistance(routePoint, passengerPoint);
+    return distance <= maxDistance;
   });
 }
 
 async function findSuitableTrips(
   passengerPickUp,
   passengerDropOff,
-  maxPickupDistance,
-  maxDropoffDistance
+  maxDistance = 100
 ) {
   try {
     const trips = await Trip.find({});
-    console.log("Trips found:", trips.length);
-    console.log("Passenger pickup:", passengerPickUp);
-    console.log("Passenger dropoff:", passengerDropOff);
-    console.log("Max pickup distance:", maxPickupDistance);
-    console.log("Max dropoff distance:", maxDropoffDistance);
-    console.log(typeof passengerPickUp, typeof passengerDropOff);
+    if (!trips || trips.length === 0) {
+      return {
+        success: false,
+        error: "No trips found in the database",
+      };
+    }
+
     const suitableTrips = [];
 
     for (const trip of trips) {
+      const startCoordinates = trip.startLocationPoint?.coordinates;
+      const endCoordinates = trip.endLocationPoint?.coordinates || [];
+
+      if (!startCoordinates || !endCoordinates) {
+        continue; // Skip trips with invalid coordinates
+      }
+
       const routeCoordinates = polyline.decode(trip.polyline);
       const driverRoutePoints = routeCoordinates.map(([lat, lng]) => ({
         latitude: lat,
         longitude: lng,
       }));
-      console.log("Starting with pick up distance");
+
       const isPickupSuitable = isCloseToRoute(
         driverRoutePoints,
         passengerPickUp,
-        maxPickupDistance
+        maxDistance
       );
-      console.log("Starting with drop off distance");
       const isDropoffSuitable = isCloseToRoute(
         driverRoutePoints,
         passengerDropOff,
-        maxDropoffDistance
+        maxDistance
       );
-      console.log("Pickup suitable:", isPickupSuitable);
-      console.log("Dropoff suitable:", isDropoffSuitable);
-      if (isPickupSuitable.isClose && isDropoffSuitable.isClose) {
-        suitableTrips.push({ trip });
+
+      if (isPickupSuitable && isDropoffSuitable) {
+        suitableTrips.push(trip);
       }
     }
 
-    return suitableTrips;
+    return {
+      success: true,
+      data: suitableTrips,
+    };
   } catch (error) {
-    console.error("Error finding suitable trips:", error);
-    throw error;
+    return {
+      success: false,
+      error: `Error finding suitable trips: ${error.message}`,
+    };
   }
 }
 
-module.exports = findSuitableTrips;
+module.exports = {
+  findSuitableTrips,
+  isCloseToRoute,
+};

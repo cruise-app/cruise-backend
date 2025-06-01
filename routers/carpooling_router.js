@@ -5,6 +5,7 @@ const MatchTripsController = require("../controllers/carpooling/match_trips_cont
 const JoinTripController = require("../controllers/carpooling/join_trip_controller");
 const GetSuggestedLocationsController = require("../controllers/carpooling/get_suggested_locations_controller");
 const GetTripRouteController = require("../controllers/carpooling/get_trip_route_controller");
+const SearchTripController = require("../controllers/carpooling/search_trips_controller");
 
 //const { verifyToken } = require("../middlewares/auth_middleware");
 
@@ -19,5 +20,6 @@ router.post(
 );
 router.get("/get-trip-route", GetTripRouteController.getTripRoute);
 router.post("/join-trip", JoinTripController.joinTrip);
+router.get("/search-trips", SearchTripController.searchTrips);
 
 module.exports = router;
