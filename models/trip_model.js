@@ -6,6 +6,10 @@ const tripSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  driverUsername: {
+    type: String,
+    required: true,
+  },
 
   vehicleType: {
     type: String,

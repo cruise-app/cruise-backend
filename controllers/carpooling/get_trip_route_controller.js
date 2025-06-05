@@ -20,11 +20,12 @@ exports.getTripRoute = async (req, res) => {
     const endLocationPoint = await GeocodingService.getCoordinates(
       endLocationName
     );
-
+    console.log("Start Location Point:", startLocationPoint.data);
+    console.log("End Location Point:", endLocationPoint.data);
     // Get encoded polyline from directions API
     const encodedPolyline = await DirectionsService.getDirections(
-      startLocationPoint,
-      endLocationPoint
+      startLocationPoint.data,
+      endLocationPoint.data
     );
 
     if (!encodedPolyline) {
@@ -44,8 +45,8 @@ exports.getTripRoute = async (req, res) => {
     }));
 
     const route = {
-      startLocation: startLocationPoint,
-      endLocation: endLocationPoint,
+      startLocation: startLocationPoint.data,
+      endLocation: endLocationPoint.data,
       polyline: formattedPath,
     };
 

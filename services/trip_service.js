@@ -85,7 +85,12 @@ class TripService {
     }
   }
 
-  static async searchTrips(startLocationName, endLocationName, maxDistance) {
+  static async searchTrips(
+    userId,
+    startLocationName,
+    endLocationName,
+    maxDistance
+  ) {
     console.log(
       "Searching trips from",
       startLocationName,
@@ -121,7 +126,9 @@ class TripService {
       }
       console.log("I am here");
       const tripsResult = await MatchTrip.findSuitableTrips(
+        userId,
         startCoordinatesResult.data,
+
         endCoordinatesResult.data,
         maxDistance
       );

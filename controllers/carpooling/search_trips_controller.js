@@ -2,15 +2,17 @@ const TripService = require("../../services/trip_service");
 
 exports.searchTrips = async (req, res) => {
   try {
-    const { departureLocation, destinationLocation, maxDistance } = req.body;
+    const { userId, departureLocation, destinationLocation, maxDistance } =
+      req.body;
     if (!departureLocation || !destinationLocation) {
       return res.status(400).json({
         message: "Departure location and destination location are required",
         success: false,
       });
     }
-
+    console.log("User ID:", userId);
     const result = await TripService.searchTrips(
+      userId,
       departureLocation,
       destinationLocation,
       maxDistance

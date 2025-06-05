@@ -30,16 +30,12 @@ class GeocodingService {
           },
         };
       } else {
-        return {
-          success: false,
-          error: `Geocoding API error: ${response.data.status}`,
-        };
+        throw new Error(`Geocoding API error: ${response.data.status}`);
       }
     } catch (error) {
-      return {
-        success: false,
-        error: `Error fetching coordinates: ${error.message}`,
-      };
+      throw new Error(
+        `Error fetching coordinates for ${address}: ${error.message}`
+      );
     }
   }
 

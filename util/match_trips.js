@@ -13,6 +13,7 @@ function isCloseToRoute(routePoints, passengerPoint, maxDistance) {
 }
 
 async function findSuitableTrips(
+  userId,
   passengerPickUp,
   passengerDropOff,
   maxDistance = 100
@@ -29,6 +30,9 @@ async function findSuitableTrips(
     const suitableTrips = [];
 
     for (const trip of trips) {
+      // if (trip.driverId.toString() === userId.toString()) {
+      //   continue; // Skip trips that belong to the same driver
+      // }
       const startCoordinates = trip.startLocationPoint?.coordinates;
       const endCoordinates = trip.endLocationPoint?.coordinates || [];
 
