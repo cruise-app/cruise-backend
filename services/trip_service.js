@@ -125,13 +125,18 @@ class TripService {
         };
       }
       console.log("I am here");
-      const tripsResult = await MatchTrip.findSuitableTrips(
-        userId,
+      console.log(
+        "Start Coordinates:",
         startCoordinatesResult.data,
-
-        endCoordinatesResult.data,
-        maxDistance
+        "End Coordinates:",
+        endCoordinatesResult.data
       );
+      const tripsResult = await MatchTrip.findSuitableTrips({
+        userId: userId,
+        passengerPickUp: startCoordinatesResult.data,
+        passengerDropOff: endCoordinatesResult.data,
+        maxDistance: maxDistance,
+      });
 
       if (!tripsResult.success) {
         return {

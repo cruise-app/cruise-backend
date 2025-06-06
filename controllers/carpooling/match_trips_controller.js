@@ -1,4 +1,4 @@
-const findSuitableTrips = require("../../util/match_trips");
+const { findSuitableTrips } = require("../../util/match_trips");
 exports.matchSuitableTrips = async (req, res) => {
   try {
     const {
