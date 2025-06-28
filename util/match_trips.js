@@ -137,6 +137,8 @@ async function findSuitableTrips({
             : null,
           pickupPolyline: pickupPolyline,
           dropoffPolyline: dropoffPolyline,
+          passengerStartPoint: passengerPickUp,
+          passengerEndPoint: passengerDropOff,
         });
       }
     }
