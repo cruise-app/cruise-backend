@@ -123,11 +123,11 @@ exports.checkPhoneNumber = async (req, res) => {
   const { phoneNumber } = req.body;
 
   try {
-    const existingUser = await UserService.checkPhoneNumber(phoneNumber);
-
-    if (existingUser) {
-      return res.status(409).json({ message: "Phone number exists" });
-    }
+    // const existingUser = await UserService.checkPhoneNumber(phoneNumber);
+    
+    // if (existingUser) {
+    //   return res.status(409).json({ message: "Phone number exists" });
+    // }
 
     return res.status(200).json({ message: "Phone number is available" });
   } catch (error) {

@@ -61,6 +61,7 @@ exports.joinTrip = async (req, res) => {
     const dropoffCoordinates = await GeocodingService.getCoordinates(
       passengerDropoff
     );
+    console.log(pickupCoordinates, dropoffCoordinates);
 
     // Add passenger
     trip.listOfPassengers.push({
@@ -69,16 +70,20 @@ exports.joinTrip = async (req, res) => {
       pickupLocationName: passengerPickup,
       pickupPoint: {
         type: "Point",
-        coordinates: [pickupCoordinates.longitude, pickupCoordinates.latitude],
+        coordinates: [
+          pickupCoordinates.data.longitude,
+          pickupCoordinates.data.latitude,
+        ],
       },
       dropoffLocationName: passengerDropoff,
       dropoffPoint: {
         type: "Point",
         coordinates: [
-          dropoffCoordinates.longitude,
-          dropoffCoordinates.latitude,
+          dropoffCoordinates.data.longitude,
+          dropoffCoordinates.data.latitude,
         ],
       },
+
       status: "Pending", // default
     });
 

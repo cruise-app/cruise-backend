@@ -1,12 +1,12 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
     mongoose.set("strictQuery", true);
-    await mongoose.connect(
-      "mongodb+srv://CruiseDB:cVR9n199knvMMGCs@cluster0.rgfcr8x.mongodb.net/CruiseDB?retryWrites=true&w=majority"
-    );
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("MongoDB connected");
+    console.log("Connected to database:", mongoose.connection.db.databaseName);
 
     // Load models
     require("../models/user_model");

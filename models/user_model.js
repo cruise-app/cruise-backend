@@ -33,6 +33,15 @@ const userSchema = new mongoose.Schema(
       enum: ["Male", "Female"],
       required: true,
     },
+    trustedContacts: {
+      type: [
+        {
+          name: String,
+          phoneNumber: String,
+          email: String,
+        },
+      ],
+    },
     dateOfBirth: {
       type: Date,
     },
