@@ -43,6 +43,16 @@ class RentalController {
       next(error);
     }
   }
+
+  async getReservations(req, res, next) {
+    try {
+      const { plateNumber } = req.params;
+      const reservations = await carRentalService.listReservations(plateNumber);
+      res.json(reservations);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new RentalController(); 

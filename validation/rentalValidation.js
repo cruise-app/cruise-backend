@@ -19,6 +19,7 @@ const returnCarSchema = Joi.object({
 
 const listCarsSchema = Joi.object({
   model: Joi.string(),
+  category: Joi.string(),
   minPrice: Joi.number().min(0),
   maxPrice: Joi.number().min(0),
   location: locationSchema,

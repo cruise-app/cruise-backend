@@ -32,7 +32,17 @@ class CarRentalService {
       throw new Error('Car is not available');
     }
 
-    // 3. Check & lock car in catalog
+    // 2b. Reject if date-range overlaps existing reservations
+    const overlapping = await rentRepository.findOverlapping(
+      car._id,
+      new Date(startDate),
+      new Date(endDate)
+    );
+    if (overlapping.length) {
+      throw new Error('Car already reserved for the selected dates');
+    }
+
+    // 3. Check & lock car in catalog (if catalog integration configured)
     await this.lockCarInCatalog(carId);
 
     try {
@@ -55,8 +65,8 @@ class CarRentalService {
         status: 'active'
       });
 
-      // 7. Update car availability
-      await rentalCarRepository.updateAvailability(carId, false);
+      // 7. Don't change car availability - cars can have future reservations
+      // Car availability is handled by date overlap checks
 
       // 8. Publish event
       await publisher.publishRentalCreated(rent);
@@ -82,8 +92,8 @@ class CarRentalService {
     // 1. Update rental status
     await rentRepository.updateStatus(rentId, 'completed');
 
-    // 2. Update car availability
-    await rentalCarRepository.updateAvailability(rent.carId.plateNumber, true);
+    // 2. Car availability is handled by date overlap checks
+    // No need to manually update availability
 
     // 3. Unlock car in catalog
     await this.unlockCarInCatalog(rent.carId.plateNumber);
@@ -96,6 +106,8 @@ class CarRentalService {
 
   // Private helper methods
   async authenticateUser(userId) {
+    // Skip auth in dev if no USER_SERVICE_URL set
+    if (!this.userServiceUrl) return;
     try {
       await axios.get(`${this.userServiceUrl}/users/${userId}/verify`);
     } catch (error) {
@@ -104,6 +116,7 @@ class CarRentalService {
   }
 
   async lockCarInCatalog(carId) {
+    if (!this.carCatalogUrl) return;
     try {
       await axios.post(`${this.carCatalogUrl}/cars/${carId}/lock`);
     } catch (error) {
@@ -112,14 +125,19 @@ class CarRentalService {
   }
 
   async unlockCarInCatalog(carId) {
+    if (!this.carCatalogUrl) return;
     try {
       await axios.post(`${this.carCatalogUrl}/cars/${carId}/unlock`);
     } catch (error) {
-      console.error('Failed to unlock car in catalog:', error);
+      console.error('Failed to unlock car in catalog:', error.message || error);
     }
   }
 
   async processPayment(userId, amount) {
+    // If no payment service configured just return a fake id in dev
+    if (!this.paymentServiceUrl) {
+      return `FAKE_PAY_${Date.now()}`;
+    }
     try {
       const response = await axios.post(`${this.paymentServiceUrl}/payments`, {
         userId,
@@ -130,6 +148,12 @@ class CarRentalService {
     } catch (error) {
       throw new Error('Payment processing failed');
     }
+  }
+
+  async listReservations(plateNumber) {
+    const car = await rentalCarRepository.findByPlate(plateNumber);
+    if (!car) throw new Error('Car not found');
+    return rentRepository.findByCarId(car._id);
   }
 }
 

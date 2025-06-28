@@ -31,6 +31,29 @@ class RentRepository {
       status: 'active'
     });
   }
+
+  async findByCarId(carId) {
+    return Rent.find({
+      carId,
+      status: { $in: ['active', 'pending'] }
+    });
+  }
+
+  /**
+   * Returns rentals that overlap the given range [startDate, endDate] (inclusive).
+   */
+  async findOverlapping(carId, startDate, endDate) {
+    return Rent.find({
+      carId,
+      status: { $in: ['active', 'pending'] },
+      $or: [
+        {
+          startDate: { $lte: endDate },
+          endDate: { $gte: startDate }
+        }
+      ]
+    });
+  }
 }
 
 module.exports = new RentRepository(); 

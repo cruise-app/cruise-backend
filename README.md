@@ -1,138 +1,173 @@
-# 🚗 Cruise Car Rental Microservice
+# 🚗 Cruise Rental Backend
 
-Welcome to the Car Rental Microservice for Cruise! This service handles all car rental operations in our ride-hailing platform, making it easy for users to rent cars when they need them.
+A Node.js/Express.js backend service for the Cruise Rental car sharing application.
 
-## ✨ Features
+## 🚀 **Features**
 
-- 🚘 List and search available cars
-- 📅 Book car rentals with flexible dates
-- 🔄 Handle car returns and maintenance
-- 📊 Real-time availability tracking
-- 🔔 Event-driven notifications
-- 🔒 Secure payment processing
-- 📱 Mobile-friendly API
+- **Car Rental Management**: Complete CRUD operations for car listings and reservations
+- **MongoDB Integration**: Persistent data storage with Mongoose ODM
+- **RESTful API**: Clean, documented API endpoints
+- **Event Publishing**: Kafka integration for event-driven architecture (optional)
+- **Data Validation**: Input validation and sanitization
+- **Error Handling**: Comprehensive error handling and logging
+- **Testing Suite**: Unit and integration tests included
 
-## 🛠️ Tech Stack
+## 📋 **Prerequisites**
 
-- **Backend**: Node.js with Express
-- **Database**: MongoDB
-- **Message Queue**: Kafka
-- **Testing**: Jest
-- **API Documentation**: Swagger/OpenAPI
+- **Node.js** >= 16.0.0
+- **MongoDB** >= 4.4.0 (running locally or connection string)
+- **npm** or **yarn** package manager
+- **Kafka** (optional, for event publishing)
 
-## 🚀 Getting Started
+## ⚡ **Quick Start**
 
-### Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB
-- Kafka
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
+### 1. **Clone & Install**
 ```bash
-git clone https://github.com/zarzourr/car-rental.git
-cd car-rental
-```
-
-2. Install dependencies:
-```bash
+cd cruise-backend
 npm install
 ```
 
-3. Set up environment variables:
+### 2. **Environment Setup**
 ```bash
-cp .env.example .env
+# Copy the example environment file
+cp env.example .env
+
 # Edit .env with your configuration
+MONGODB_URI=mongodb://localhost:27017/rental-cars
+PORT=3000
+NODE_ENV=development
+ENABLE_KAFKA=false
 ```
 
-4. Start the service:
+### 3. **Database Setup**
 ```bash
+# Make sure MongoDB is running, then seed with sample data
+npm run seed
+```
+
+### 4. **Start Development Server**
+```bash
+npm run dev
+# or
 npm start
 ```
 
-## 📡 API Documentation
+The server will start on `http://localhost:3000`
 
-### List Available Cars
-```http
-GET /api/rentals
+## 🛠 **Available Scripts**
+
+- `npm start` - Start production server
+- `npm run dev` - Start development server with hot reload
+- `npm run seed` - Seed database with sample car data
+- `npm test` - Run test suite
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+
+## 🔧 **Environment Variables**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MONGODB_URI` | `mongodb://localhost:27017/rental-cars` | MongoDB connection string |
+| `PORT` | `3000` | Server port |
+| `NODE_ENV` | `development` | Environment mode |
+| `ENABLE_KAFKA` | `false` | Enable/disable Kafka event publishing |
+| `LOG_LEVEL` | `info` | Logging level |
+
+## 📚 **API Endpoints**
+
+### **Cars**
+- `GET /api/rentals` - List available cars
+- `GET /api/rentals/:id` - Get car details
+
+### **Reservations**
+- `POST /api/rentals` - Create new reservation
+- `GET /api/rentals/:carId/reservations` - Get car reservations
+- `POST /api/rentals/:rentId/return` - Process car return
+
+### **Health Check**
+- `GET /health` - Service health status
+
+## 🏗 **Architecture**
+
 ```
-Query Parameters:
-- `location` - City or area
-- `startDate` - Rental start date
-- `endDate` - Rental end date
-- `priceRange` - Min and max price
-- `carType` - Type of car (sedan, SUV, etc.)
-
-### Reserve a Car
-```http
-POST /api/rentals
-```
-Request Body:
-```json
-{
-  "carId": "string",
-  "userId": "string",
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-03",
-  "pickupLocation": {
-    "lat": 37.7749,
-    "lng": -122.4194
-  }
-}
+├── controllers/     # Request handlers
+├── models/         # MongoDB schemas
+├── repositories/   # Data access layer
+├── services/       # Business logic
+├── validation/     # Input validation
+├── middleware/     # Express middlewares
+├── events/         # Event publishing
+└── tests/          # Test suites
 ```
 
-### Return a Car
-```http
-POST /api/rentals/:rentId/return
-```
+## 🧪 **Testing**
 
-## 🧪 Testing
-
-Run the test suite:
 ```bash
 # Run all tests
 npm test
 
-# Run unit tests
-npm run test:unit
+# Run with coverage
+npm run test:coverage
 
-# Run integration tests
-npm run test:integration
+# Run specific test suite
+npm test -- --grep "CarRentalService"
 ```
 
-## 📦 Project Structure
+## 🔌 **Database Schema**
 
+### **Car Model**
+```javascript
+{
+  plateNumber: String,
+  model: String,
+  category: String, // 'Electric', 'Sedan', 'SUV', 'Compact'
+  dailyRate: Number,
+  location: { lat: Number, lng: Number },
+  isAvailable: Boolean,
+  imageUrl: String
+}
 ```
-car-rental/
-├── controllers/     # Request handlers
-├── models/         # Database models
-├── services/       # Business logic
-├── repositories/   # Data access
-├── events/         # Kafka events
-├── middleware/     # Express middleware
-├── validation/     # Input validation
-└── tests/          # Test files
+
+### **Rental Model**
+```javascript
+{
+  carId: ObjectId,
+  renterId: String,
+  startDate: Date,
+  endDate: Date,
+  totalCost: Number,
+  status: String,
+  pickupLocation: { lat: Number, lng: Number }
+}
 ```
 
-## 🤝 Contributing
+## 🚨 **Troubleshooting**
 
-We love your input! We want to make contributing to Cruise as easy and transparent as possible.
+### **MongoDB Connection Issues**
+- Ensure MongoDB service is running
+- Check connection string in `.env`
+- Verify network connectivity
 
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### **Port Already in Use**
+```bash
+# Find process using port 3000
+lsof -ti:3000
 
-## 📝 License
+# Kill the process
+kill -9 <PID>
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### **Kafka Warnings**
+If you see Kafka connection warnings, set `ENABLE_KAFKA=false` in your `.env` file.
 
-## 🙏 Acknowledgments
+## 🤝 **Contributing**
 
-- Thanks to all our contributors
-- Inspired by modern car-sharing platforms
-- Built with ❤️ by the Cruise team 
+1. Create a feature branch
+2. Make your changes
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+## 📄 **License**
+
+This project is licensed under the MIT License. 

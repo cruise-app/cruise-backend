@@ -27,6 +27,11 @@ const rentalCarSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  category: {
+    type: String,
+    enum: ['Sedan', 'SUV', 'Electric', 'Compact', 'Standard'],
+    default: 'Standard',
+  },
   ownerId: {
     type: String,
     required: true
@@ -51,6 +56,10 @@ const rentalCarSchema = new mongoose.Schema({
   insuranceTerms: {
     type: String,
     required: true
+  },
+  imageUrl: {
+    type: String,
+    default: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&w=800&q=80'
   },
   isAvailable: {
     type: Boolean,
