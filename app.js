@@ -43,6 +43,11 @@ app.use("/login", LoginUserRouter);
 app.use("/forget-password", ForgetPasswordRouter);
 app.use("/carpooling", CarpoolingRouter);
 app.use("/api/messages", MessageRouter);
+app.use("/", (req, res) => {
+  res.status(200).json({
+    message: "Welcome to the API",
+  });
+});
 // app.use(express.static(path.join(rootDir, 'public')));
 
 connectDB()
