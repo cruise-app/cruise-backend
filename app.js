@@ -11,10 +11,12 @@ const LoginUserRouter = require("./routers/login_user_router");
 const ForgetPasswordRouter = require("./routers/forget_password_router");
 const CarpoolingRouter = require("./routers/carpooling_router");
 const MessageRouter = require("./routers/message_router");
+const RentalRouter = require("./routers/rental_router");
 
 const { setupTripSocket } = require("./util/websockets/socketHandlers");
 const { setupChatSocket } = require("./util/websockets/chatSocketHandler");
 const { liveLocationSocket } = require("./util/websockets/liveLocationSocket");
+const { setupRentalSocket } = require("./util/websockets/rentalSocketHandler");
 
 require("dotenv").config();
 const port = process.env.PORT || 3000;
@@ -43,6 +45,7 @@ app.use("/login", LoginUserRouter);
 app.use("/forget-password", ForgetPasswordRouter);
 app.use("/carpooling", CarpoolingRouter);
 app.use("/api/messages", MessageRouter);
+app.use("/api/rentals", RentalRouter);
 app.use("/", (req, res) => {
   res.status(200).json({
     message: "Welcome to the API",
@@ -56,6 +59,7 @@ connectDB()
     setupTripSocket(io);
     setupChatSocket(io);
     liveLocationSocket(io);
+    setupRentalSocket(io);
 
     server.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on http://localhost:${port}`);
