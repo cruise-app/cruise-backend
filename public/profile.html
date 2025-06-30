@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog System - Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        .post-card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .post-image {
+            max-height: 400px;
+            object-fit: cover;
+        }
+        .profile-header {
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .stat-item {
+            text-align: center;
+            cursor: pointer;
+        }
+        .stat-item:hover {
+            color: #0d6efd;
+        }
+        .user-list-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-list-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/feed.html">Blog System</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/feed.html">Back to Feed</a>
+                <a class="nav-link" href="/notifications.html">
+                    Notifications <span class="badge bg-danger" id="notificationBadge"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 id="profileUsername"></h2>
+                        <div id="followButtonContainer"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <strong id="postsCount">0</strong>
+                            <div>Posts</div>
+                        </div>
+                        <div class="stat-item" onclick="showFollowersModal()">
+                            <strong id="followersCount">0</strong>
+                            <div>Followers</div>
+                        </div>
+                        <div class="stat-item" onclick="showFollowingModal()">
+                            <strong id="followingCount">0</strong>
+                            <div>Following</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User's Posts -->
+                <div id="userPosts"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Followers Modal -->
+    <div class="modal fade" id="followersModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Followers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="followersModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Following Modal -->
+    <div class="modal fade" id="followingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Following</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="followingModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Bootstrap and our scripts in the correct order -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let followersModal = null;
+        let followingModal = null;
+        let userData = null;
+        const currentUserId = localStorage.getItem('userId');
+        const profileUserId = new URLSearchParams(window.location.search).get('userId') || currentUserId;
+        let isFollowing = false;
+
+        // Initialize modals after DOM is loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            followersModal = new bootstrap.Modal(document.getElementById('followersModal'));
+            followingModal = new bootstrap.Modal(document.getElementById('followingModal'));
+        });
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            
+            return Math.floor(seconds) + " seconds ago";
+        }
+
+        async function loadProfile() {
+            try {
+                // Fetch user data
+                const userResponse = await fetch(`/users/${profileUserId}`);
+                const userData = await userResponse.json();
+
+                document.getElementById('profileUsername').textContent = userData.username;
+                document.getElementById('followersCount').textContent = userData.followers.length;
+                document.getElementById('followingCount').textContent = userData.following.length;
+
+                // Check if viewing own profile
+                if (profileUserId !== currentUserId) {
+                    isFollowing = userData.followers.includes(currentUserId);
+                    const buttonText = isFollowing ? 'Unfollow' : 'Follow';
+                    const buttonClass = isFollowing ? 'btn-secondary' : 'btn-primary';
+                    
+                    document.getElementById('followButtonContainer').innerHTML = `
+                        <button onclick="toggleFollow()" class="btn ${buttonClass}">${buttonText}</button>
+                    `;
+                }
+
+                // Fetch user's posts
+                const postsResponse = await fetch(`/users/${profileUserId}/posts`);
+                const posts = await postsResponse.json();
+                
+                document.getElementById('postsCount').textContent = posts.length;
+
+                const postsHtml = posts.map(post => `
+                    <div class="card post-card">
+                        <img src="${post.imageUrl}" class="card-img-top post-image" alt="Post image">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">${getTimeAgo(post.createdAt)}</small>
+                                ${profileUserId === currentUserId ? `
+                                    <button onclick="deletePost('${post._id}')" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <p class="card-text">${post.text}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button class="btn btn-link" onclick="likePost('${post._id}')">
+                                    <i class="bi bi-heart${post.likes.includes(currentUserId) ? '-fill text-danger' : ''}"></i>
+                                    ${post.likes.length}
+                                </button>
+                                <div class="comment-section">
+                                    <form onsubmit="addComment(event, '${post._id}')" class="d-flex">
+                                        <input type="text" class="form-control me-2" placeholder="Add a comment...">
+                                        <button type="submit" class="btn btn-primary">Comment</button>
+                                    </form>
+                                    <div class="mt-2">
+                                        ${post.comments.map(comment => `
+                                            <div class="mb-1">
+                                                <strong>${comment.user.username}:</strong> ${comment.text}
+                                                <small class="text-muted ms-2">${getTimeAgo(comment.createdAt)}</small>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('userPosts').innerHTML = postsHtml;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        async function toggleFollow() {
+            try {
+                const endpoint = isFollowing ? '/unfollow' : '/follow-request';
+                const response = await fetch(`${endpoint}/${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ targetUserId: profileUserId })
+                });
+
+                if (response.ok) {
+                    // Reload profile to update followers count and button state
+                    loadProfile();
+                }
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+            }
+        }
+
+        // Like Post
+        async function likePost(postId) {
+            try {
+                const response = await fetch(`/posts/${postId}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUserId })
+                });
+                
+                if (response.ok) {
+                    loadProfile();
+                }
+            } catch (error) {
+                console.error('Error liking post:', error);
+            }
+        }
+
+        // Add Comment
+        async function addComment(event, postId) {
+            event.preventDefault();
+            const text = event.target.querySelector('input').value;
+            
+            try {
+                const response = await fetch(`/posts/${postId}/comment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUserId, text })
+                });
+                
+                if (response.ok) {
+                    event.target.reset();
+                    loadProfile();
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+            }
+        }
+
+        // Delete Post
+        async function deletePost(postId) {
+            if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/posts/${postId}?userId=${currentUserId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Refresh the profile to show updated posts
+                    loadProfile();
+                } else {
+                    alert(data.error || 'Error deleting post');
+                }
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                alert('Error deleting post. Please try again.');
+            }
+        }
+
+        async function showFollowersModal() {
+            // Wait for modal initialization if needed
+            if (!followersModal) {
+                followersModal = new bootstrap.Modal(document.getElementById('followersModal'));
+            }
+
+            const modalBody = document.getElementById('followersModalBody');
+            try {
+                if (!userData) {
+                    const response = await fetch(`/users/${profileUserId}`);
+                    userData = await response.json();
+                }
+
+                if (userData.followers.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center text-muted">No followers yet</p>';
+                } else {
+                    const followersHtml = userData.followers.map(follower => `
+                        <div class="user-list-item">
+                            <a href="/profile.html?userId=${follower._id}" class="text-decoration-none">
+                                ${follower.username}
+                            </a>
+                            ${currentUserId === profileUserId ? `
+                                <button onclick="removeFollower('${follower._id}')" class="btn btn-sm btn-outline-danger">
+                                    Remove
+                                </button>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                    modalBody.innerHTML = followersHtml;
+                }
+                followersModal.show();
+            } catch (error) {
+                console.error('Error loading followers:', error);
+                modalBody.innerHTML = '<p class="text-center text-danger">Error loading followers</p>';
+            }
+        }
+
+        async function showFollowingModal() {
+            // Wait for modal initialization if needed
+            if (!followingModal) {
+                followingModal = new bootstrap.Modal(document.getElementById('followingModal'));
+            }
+
+            const modalBody = document.getElementById('followingModalBody');
+            try {
+                if (!userData) {
+                    const response = await fetch(`/users/${profileUserId}`);
+                    userData = await response.json();
+                }
+
+                if (userData.following.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center text-muted">Not following anyone</p>';
+                } else {
+                    const followingHtml = userData.following.map(following => `
+                        <div class="user-list-item">
+                            <a href="/profile.html?userId=${following._id}" class="text-decoration-none">
+                                ${following.username}
+                            </a>
+                            ${currentUserId === profileUserId ? `
+                                <button onclick="unfollow('${following._id}')" class="btn btn-sm btn-outline-danger">
+                                    Unfollow
+                                </button>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                    modalBody.innerHTML = followingHtml;
+                }
+                followingModal.show();
+            } catch (error) {
+                console.error('Error loading following:', error);
+                modalBody.innerHTML = '<p class="text-center text-danger">Error loading following list</p>';
+            }
+        }
+
+        async function removeFollower(followerId) {
+            if (!confirm('Are you sure you want to remove this follower?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/users/${followerId}/unfollow`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ targetUserId: profileUserId })
+                });
+
+                if (response.ok) {
+                    // Refresh the profile and followers list
+                    userData = null;
+                    await loadProfile();
+                    showFollowersModal();
+                }
+            } catch (error) {
+                console.error('Error removing follower:', error);
+                alert('Error removing follower. Please try again.');
+            }
+        }
+
+        async function unfollow(userId) {
+            if (!confirm('Are you sure you want to unfollow this user?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/unfollow/${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ targetUserId: userId })
+                });
+
+                if (response.ok) {
+                    // Refresh the profile and following list
+                    userData = null;
+                    await loadProfile();
+                    showFollowingModal();
+                }
+            } catch (error) {
+                console.error('Error unfollowing user:', error);
+                alert('Error unfollowing user. Please try again.');
+            }
+        }
+
+        // Initial load
+        loadProfile();
+    </script>
+</body>
+</html> 

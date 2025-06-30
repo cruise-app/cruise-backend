@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog System - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-message {
+            color: #198754;
+            margin-top: 10px;
+            display: none;
+        }
+        .message {
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <h2 class="text-center mb-4">Welcome to Blog System</h2>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                    <small class="form-text text-muted">Enter your username to login or create a new account.</small>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Enter</button>
+                <div id="errorMessage" class="error-message text-center"></div>
+                <div id="successMessage" class="success-message text-center"></div>
+                <div id="statusMessage" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const errorMessageElement = document.getElementById('errorMessage');
+        const successMessageElement = document.getElementById('successMessage');
+        const statusMessageElement = document.getElementById('statusMessage');
+
+        function showError(message) {
+            errorMessageElement.style.display = 'block';
+            successMessageElement.style.display = 'none';
+            statusMessageElement.style.display = 'none';
+            errorMessageElement.textContent = message;
+        }
+
+        function showSuccess(message) {
+            errorMessageElement.style.display = 'none';
+            successMessageElement.style.display = 'block';
+            statusMessageElement.style.display = 'none';
+            successMessageElement.textContent = message;
+        }
+
+        function showStatus(message) {
+            statusMessageElement.style.display = 'block';
+            statusMessageElement.textContent = message;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            
+            if (!username) {
+                showError('Please enter a username');
+                return;
+            }
+
+            try {
+                showStatus('Checking username...');
+                
+                const response = await fetch('/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('userId', data._id);
+                    localStorage.setItem('username', data.username);
+                    
+                    if (response.status === 201) {
+                        showSuccess('Account created successfully! Redirecting...');
+                    } else {
+                        showSuccess('Welcome back! Redirecting...');
+                    }
+
+                    // Redirect after a short delay to show the message
+                    setTimeout(() => {
+                        window.location.href = '/feed.html';
+                    }, 1500);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Network error or server not responding. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html> 

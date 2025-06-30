@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog System - Feed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        .post-card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .post-image {
+            max-height: 400px;
+            object-fit: cover;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">Blog System</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/profile.html" id="profileLink">My Profile</a>
+                <a class="nav-link" href="/notifications.html">
+                    Notifications <span class="badge bg-danger" id="notificationBadge"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <!-- Create Post Form -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Create a New Post</h5>
+                        <form id="createPostForm">
+                            <div class="mb-3">
+                                <label for="postImage" class="form-label">Image</label>
+                                <input type="file" class="form-control" id="postImage" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="postText" class="form-label">Text</label>
+                                <textarea class="form-control" id="postText" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Share Post</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Posts Feed -->
+                <div id="postsFeed"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = '/index.html';
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            
+            return Math.floor(seconds) + " seconds ago";
+        }
+
+        // Create Post
+        document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const imageFile = document.getElementById('postImage').files[0];
+            const text = document.getElementById('postText').value;
+            
+            if (!imageFile || !text) {
+                alert('Please select an image and enter text for your post');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            formData.append('userId', userId);
+            formData.append('text', text);
+
+            try {
+                const response = await fetch('/posts', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('createPostForm').reset();
+                    loadPosts();
+                } else {
+                    alert(data.error || 'Error creating post. Please make sure all fields are filled.');
+                }
+            } catch (error) {
+                console.error('Error creating post:', error);
+                alert('Error creating post. Please try again.');
+            }
+        });
+
+        // Load Posts
+        async function loadPosts() {
+            try {
+                const response = await fetch(`/feed/${userId}`);
+                const posts = await response.json();
+                
+                let lastWasFollowed = null;
+                const feedHtml = posts.map((post, index) => {
+                    const isFollowed = post.user._id === userId || post.isFollowing;
+                    
+                    let separator = '';
+                    if (lastWasFollowed === true && !isFollowed) {
+                        separator = `
+                            <div class="text-center my-4">
+                                <hr class="d-inline-block w-25 mx-3 align-middle" style="margin-top: 8px;">
+                                <span class="text-muted">Other posts</span>
+                                <hr class="d-inline-block w-25 mx-3 align-middle" style="margin-top: 8px;">
+                            </div>
+                        `;
+                    } else if (index === 0 && !isFollowed) {
+                        separator = `
+                            <div class="text-center mb-4">
+                                <span class="text-muted">All posts</span>
+                                <hr>
+                            </div>
+                        `;
+                    } else if (index === 0 && isFollowed) {
+                        separator = `
+                            <div class="text-center mb-4">
+                                <span class="text-muted">Posts from people you follow</span>
+                                <hr>
+                            </div>
+                        `;
+                    }
+                    
+                    lastWasFollowed = isFollowed;
+                    
+                    return `
+                        ${separator}
+                        <div class="card post-card">
+                            <img src="${post.imageUrl}" class="card-img-top post-image" alt="Post image">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="card-subtitle mb-0">
+                                            <a href="/profile.html?userId=${post.user._id}" class="text-decoration-none text-muted">
+                                                Posted by ${post.user.username}
+                                            </a>
+                                        </h6>
+                                        ${post.user._id !== userId && !post.isFollowing ? `
+                                            <button onclick="followUser('${post.user._id}')" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-person-plus"></i> Follow
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <small class="text-muted">${getTimeAgo(post.createdAt)}</small>
+                                </div>
+                                <p class="card-text">${post.text}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-link" onclick="likePost('${post._id}')">
+                                        <i class="bi bi-heart${post.likes.includes(userId) ? '-fill text-danger' : ''}"></i>
+                                        ${post.likes.length}
+                                    </button>
+                                    <div class="comment-section">
+                                        <form onsubmit="addComment(event, '${post._id}')" class="d-flex">
+                                            <input type="text" class="form-control me-2" placeholder="Add a comment...">
+                                            <button type="submit" class="btn btn-primary">Comment</button>
+                                        </form>
+                                        <div class="mt-2">
+                                            ${post.comments.map(comment => `
+                                                <div class="mb-1">
+                                                    <a href="/profile.html?userId=${comment.user._id}" class="text-decoration-none">
+                                                        <strong>${comment.user.username}</strong>
+                                                    </a>: ${comment.text}
+                                                    <small class="text-muted ms-2">${getTimeAgo(comment.createdAt)}</small>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('postsFeed').innerHTML = feedHtml;
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+
+        // Like Post
+        async function likePost(postId) {
+            try {
+                const response = await fetch(`/posts/${postId}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (response.ok) {
+                    loadPosts();
+                }
+            } catch (error) {
+                console.error('Error liking post:', error);
+            }
+        }
+
+        // Add Comment
+        async function addComment(event, postId) {
+            event.preventDefault();
+            const text = event.target.querySelector('input').value;
+            
+            try {
+                const response = await fetch(`/posts/${postId}/comment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId, text })
+                });
+                
+                if (response.ok) {
+                    event.target.reset();
+                    loadPosts();
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+            }
+        }
+
+        // Check Notifications
+        async function checkNotifications() {
+            try {
+                const response = await fetch(`/notifications/${userId}`);
+                const notifications = await response.json();
+                const unreadCount = notifications.filter(n => !n.read).length;
+                document.getElementById('notificationBadge').textContent = unreadCount || '';
+            } catch (error) {
+                console.error('Error checking notifications:', error);
+            }
+        }
+
+        // Follow User
+        async function followUser(targetUserId) {
+            try {
+                const response = await fetch(`/follow-request/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ targetUserId })
+                });
+
+                if (response.ok) {
+                    // Refresh the feed to update the UI
+                    loadPosts();
+                    alert('Follow request sent!');
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Error sending follow request');
+                }
+            } catch (error) {
+                console.error('Error following user:', error);
+                alert('Error sending follow request. Please try again.');
+            }
+        }
+
+        // Initial load
+        loadPosts();
+        setInterval(checkNotifications, 30000); // Check notifications every 30 seconds
+    </script>
+</body>
+</html> 

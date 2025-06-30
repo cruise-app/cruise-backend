@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudinary Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-container {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .preview {
+            margin-top: 20px;
+        }
+        .preview img {
+            max-width: 300px;
+            margin-top: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cloudinary Upload Test</h1>
+    
+    <div class="upload-container">
+        <form id="uploadForm">
+            <input type="file" id="fileInput" accept="image/*,video/*">
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <div class="preview">
+        <h3>Preview:</h3>
+        <div id="preview"></div>
+    </div>
+
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const result = document.getElementById('result');
+
+        // Preview file before upload
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.innerHTML = '';
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        preview.appendChild(img);
+                    } else {
+                        preview.textContent = `Selected file: ${file.name}`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) {
+                showResult('Please select a file first', false);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`File uploaded successfully! URL: ${data.url}`, true);
+                } else {
+                    showResult(`Error: ${data.error}`, false);
+                }
+            } catch (error) {
+                showResult(`Error: ${error.message}`, false);
+            }
+        });
+
+        function showResult(message, isSuccess) {
+            result.textContent = message;
+            result.style.display = 'block';
+            result.className = `result ${isSuccess ? 'success' : 'error'}`;
+        }
+    </script>
+</body>
+</html> 
